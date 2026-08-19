@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Etudex — Offres d'études à l'étranger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14213D;
+    --ink-soft:#2B3A5A;
+    --paper:#F1EEE3;
+    --paper-raised:#FBFAF5;
+    --stamp:#B23A2E;
+    --stamp-dark:#8E2C22;
+    --gold:#B0862C;
+    --line:#D9D2BC;
+    --slate:#5C6B7A;
+    --ok:#3D6B4F;
+    --shadow: 0 12px 30px -14px rgba(20,33,61,.35);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(20,33,61,0.05) 1px, transparent 0);
+    background-size: 22px 22px;
+    pointer-events:none;
+    z-index:0;
+  }
+  h1,h2,h3,.display{ font-family:'Fraunces', serif; font-weight:600; letter-spacing:-0.01em; margin:0; }
+  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing:.02em; }
+  a{ color:inherit; }
+  button{ font-family:inherit; }
+  :focus-visible{ outline:2px solid var(--stamp); outline-offset:3px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+  .view{ position:relative; z-index:1; display:none; }
+  .view.active{ display:block; animation:fadeIn .35s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+  /* ---------- Header ---------- */
+  header.site{
+    position:sticky; top:0; z-index:50;
+    background:rgba(241,238,227,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .header-inner{
+    max-width:1180px; margin:0 auto; padding:16px 28px;
+    display:flex; align-items:center; justify-content:space-between; gap:20px;
+  }
+  .logo{ display:flex; align-items:center; gap:10px; cursor:pointer; }
+  .logo-mark{
+    width:36px; height:36px; border-radius:50%;
+    border:1.5px solid var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; font-size:15px;
+    position:relative;
+  }
+  .logo-mark::after{
+    content:"";
+    position:absolute; inset:3px;
+    border:1px dashed var(--stamp);
+    border-radius:50%;
+    opacity:.55;
+  }
+  .logo-text{ font-family:'Fraunces', serif; font-weight:600; font-size:19px; }
+  .logo-text small{ display:block; font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.14em; color:var(--slate); font-weight:500; margin-top:1px;}
+  nav.main{ display:flex; align-items:center; gap:28px; }
+  nav.main a{ text-decoration:none; font-size:14px; font-weight:500; color:var(--ink-soft); cursor:pointer; }
+  nav.main a.current{ color:var(--stamp); }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:11px 20px; border-radius:3px;
+    font-size:13.5px; font-weight:600; letter-spacing:.01em;
+    cursor:pointer; border:1.5px solid transparent; text-decoration:none;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-stamp{ background:var(--stamp); color:#fff; box-shadow: var(--shadow); }
+  .btn-stamp:hover{ background:var(--stamp-dark); }
+  .btn-ghost{ background:transparent; border-color:var(--ink); color:var(--ink); }
+  .btn-ghost:hover{ background:var(--ink); color:#fff; }
+  .btn-wa{ background:#1F8A5A; color:#fff; }
+  .btn-wa:hover{ background:#186E48; }
+
+  /* =========================================================
+     VUE 1 — LISTE DES OFFRES
+  ========================================================= */
+  .hero{
+    max-width:1180px; margin:0 auto; padding:64px 28px 20px;
+    position:relative;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--stamp); font-weight:600;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{ content:""; width:26px; height:1px; background:var(--stamp); display:inline-block; }
+  .hero h1{ font-size:clamp(34px,5vw,54px); line-height:1.05; margin-top:14px; max-width:14ch; }
+  .hero p.lead{ margin-top:16px; max-width:52ch; color:var(--slate); font-size:16.5px; line-height:1.6; }
+
+  .toolbar{
+    max-width:1180px; margin:38px auto 0; padding:0 28px;
+    display:flex; gap:14px; flex-wrap:wrap; align-items:center;
+  }
+  .search-box{
+    flex:1; min-width:240px;
+    display:flex; align-items:center; gap:10px;
+    background:var(--paper-raised); border:1.5px solid var(--ink);
+    border-radius:3px; padding:12px 16px;
+  }
+  .search-box input{
+    border:none; outline:none; background:transparent; flex:1;
+    font-family:'IBM Plex Sans',sans-serif; font-size:14.5px; color:var(--ink);
+  }
+  .search-box input::placeholder{ color:#8b8672; }
+  .filter-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    padding:9px 15px; border-radius:20px; border:1.5px solid var(--line);
+    background:var(--paper-raised); font-size:13px; font-weight:500; cursor:pointer;
+    color:var(--ink-soft); transition: all .15s ease; white-space:nowrap;
+  }
+  .chip.active{ border-color:var(--ink); background:var(--ink); color:#fff; }
+
+  .offer-grid{
+    max-width:1180px; margin:34px auto 90px; padding:0 28px;
+    display:grid; grid-template-columns:1fr; gap:26px;
+  }
+
+  /* ticket / boarding-pass card */
+  .ticket{
+    display:grid; grid-template-columns: 1.15fr 300px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    position:relative;
+  }
+  .ticket-main{ padding:26px 30px; display:flex; flex-direction:column; gap:12px; }
+  .ticket-flag-row{ display:flex; align-items:center; gap:12px; }
+  .flag-badge{
+    font-size:22px; width:46px; height:46px; border-radius:50%;
+    background:var(--paper); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; overflow:hidden;
+  }
+  .flag-badge img{ width:100%; height:100%; object-fit:cover; }
+  .ticket-title{ font-size:23px; }
+  .status-badge{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em;
+    text-transform:uppercase; font-weight:600; padding:4px 10px; border-radius:20px;
+    display:inline-flex; align-items:center; gap:6px; width:fit-content;
+  }
+  .status-open{ background:#E4EFE6; color:var(--ok); }
+  .status-soon{ background:#F6E9D9; color:var(--gold); }
+  .status-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .ticket-desc{ color:var(--slate); font-size:14.5px; line-height:1.6; max-width:56ch; }
+  .ticket-meta{ display:flex; gap:22px; margin-top:6px; flex-wrap:wrap; }
+  .meta-item .mono{ font-size:10px; color:var(--slate); text-transform:uppercase; letter-spacing:.1em; display:block; margin-bottom:3px;}
+  .meta-item strong{ font-size:14px; font-weight:600; }
+  .ticket-actions{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .link-quiet{ font-size:13px; color:var(--slate); text-decoration:underline; text-underline-offset:3px; background:none; border:none; cursor:pointer; padding:0; }
+
+  .ticket-stub{
+    background: linear-gradient(160deg, var(--ink) 0%, #1c2c50 100%);
+    color:#fff; padding:24px 24px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    position:relative;
+    border-left: 2px dashed rgba(255,255,255,.28);
+  }
+  .ticket-stub::before, .ticket-stub::after{
+    content:""; position:absolute; left:-11px; width:22px; height:22px;
+    border-radius:50%; background:var(--paper);
+  }
+  .ticket-stub::before{ top:-11px; }
+  .ticket-stub::after{ bottom:-11px; }
+  .stub-label{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; opacity:.65; }
+  .stub-session{ font-family:'Fraunces',serif; font-size:19px; margin-top:5px; }
+  .stub-price{ margin-top:16px; }
+  .stub-price .amount{ font-size:22px; font-weight:700; font-family:'Fraunces',serif; }
+  .stub-cta{
+    margin-top:18px; width:100%; text-align:center; justify-content:center;
+    background:var(--stamp); color:#fff; border:none; padding:13px 16px;
+    border-radius:3px; font-weight:600; font-size:13.5px; cursor:pointer;
+    display:flex; align-items:center; gap:8px;
+  }
+  .stub-cta:hover{ background:#cf473a; }
+  .stub-ref{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; opacity:.5; margin-top:10px; }
+
+  .empty-state{
+    text-align:center; padding:70px 20px; color:var(--slate);
+    display:none;
+  }
+  .empty-state.show{ display:block; }
+
+  @media (max-width: 760px){
+    .ticket{ grid-template-columns:1fr; }
+    .ticket-stub{ border-left:none; border-top:2px dashed rgba(255,255,255,.28); }
+    .ticket-stub::before{ top:-11px; left:calc(50% - 11px); }
+    .ticket-stub::after{ display:none; }
+    .ticket-stub::before{ display:none; }
+  }
+
+  /* =========================================================
+     VUE 2 — DÉTAIL DE L'OFFRE (le "dossier")
+  ========================================================= */
+  .dossier-hero{
+    position:relative; height:300px; overflow:hidden;
+  }
+  .dossier-hero img{ width:100%; height:100%; object-fit:cover; filter:saturate(.92) brightness(.72); }
+  .dossier-hero .scrim{
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(20,33,61,.15) 0%, rgba(20,33,61,.85) 100%);
+  }
+  .dossier-hero-content{
+    position:absolute; left:0; right:0; bottom:0;
+    max-width:1180px; margin:0 auto; padding:0 28px 30px;
+    color:#fff;
+  }
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+    color:#fff; font-size:13px; font-weight:500; opacity:.85; margin-bottom:14px;
+    background:none; border:none; padding:0; font-family:inherit;
+  }
+  .dossier-hero-content h1{ color:#fff; font-size:clamp(28px,4vw,42px); }
+  .dossier-hero-content .status-badge{ margin-top:10px; }
+
+  .dossier-shell{
+    max-width:1180px; margin:-40px auto 90px; padding:0 28px;
+    position:relative; z-index:2;
+    display:grid; grid-template-columns: 1fr 300px; gap:28px; align-items:start;
+  }
+  .dossier-card{
+    background:var(--paper-raised); border:1px solid var(--line);
+    border-radius:6px; box-shadow:var(--shadow); overflow:hidden;
+  }
+  .tabs{
+    display:flex; border-bottom:1px solid var(--line); overflow-x:auto;
+  }
+  .tab{
+    padding:17px 22px; font-size:13.5px; font-weight:600; color:var(--slate);
+    cursor:pointer; white-space:nowrap; position:relative; background:none; border:none; font-family:inherit;
+  }
+  .tab.active{ color:var(--ink); }
+  .tab.active::after{
+    content:""; position:absolute; left:22px; right:22px; bottom:-1px; height:2px; background:var(--stamp);
+  }
+  .tab-panel{ display:none; padding:32px; }
+  .tab-panel.active{ display:block; animation:fadeIn .3s ease; }
+  .tab-panel h3{ font-size:20px; margin-bottom:14px; }
+  .tab-panel p{ color:var(--ink-soft); line-height:1.75; font-size:14.5px; margin:0 0 14px; }
+  .tab-panel strong{ color:var(--ink); }
+  .service-block{ margin-bottom:22px; }
+  .service-block h4{ font-family:'Fraunces',serif; font-size:15.5px; margin-bottom:10px; }
+  ul.check-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  ul.check-list li{ display:flex; gap:10px; font-size:14.5px; color:var(--ink-soft); line-height:1.5; }
+  ul.check-list li::before{ content:"✓"; color:var(--ok); font-weight:700; flex-shrink:0; }
+  .price-card{
+    background:var(--paper); border:1px dashed var(--line); border-radius:5px;
+    padding:20px 22px; margin-bottom:16px;
+  }
+  .price-card .price-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--slate); }
+  .price-card .price-amount{ font-family:'Fraunces',serif; font-size:26px; margin-top:6px; color:var(--stamp-dark); }
+  .price-card .price-note{ font-size:12.5px; color:var(--slate); margin-top:6px; }
+
+  /* parcours timeline */
+  .journey{ padding:32px; border-top:1px solid var(--line); }
+  .journey h3{ font-size:17px; margin-bottom:22px; }
+  .journey-track{ display:flex; align-items:flex-start; gap:0; position:relative; }
+  .journey-step{ flex:1; text-align:center; position:relative; padding:0 8px; }
+  .journey-step .dot{
+    width:30px; height:30px; border-radius:50%; background:var(--paper-raised);
+    border:2px solid var(--ink); display:flex; align-items:center; justify-content:center;
+    margin:0 auto 10px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600;
+    position:relative; z-index:2;
+  }
+  .journey-step.done .dot{ background:var(--stamp); border-color:var(--stamp); color:#fff; }
+  .journey-track::before{
+    content:""; position:absolute; top:15px; left:8%; right:8%; height:1px;
+    border-top:1.5px dashed var(--line); z-index:1;
+  }
+  .journey-step p{ font-size:12.5px; color:var(--slate); margin:0; font-weight:500; }
+
+  /* side sticky panel on detail page */
+  .side-panel{ position:sticky; top:96px; display:flex; flex-direction:column; gap:14px; }
+  .side-card{
+    background:var(--ink); color:#fff; border-radius:6px; padding:24px 22px;
+    box-shadow:var(--shadow);
+  }
+  .side-card .mono{ font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; opacity:.6; }
+  .side-card .session-name{ font-family:'Fraunces',serif; font-size:19px; margin-top:6px; }
+  .side-card .btn{ width:100%; justify-content:center; margin-top:16px; }
+  .side-card .btn + .btn{ margin-top:10px; }
+  .side-note{
+    background:var(--paper-raised); border:1px solid var(--line); border-radius:6px;
+    padding:18px 20px; font-size:12.5px; color:var(--slate); line-height:1.6;
+  }
+
+  @media (max-width: 860px){
+    .dossier-shell{ grid-template-columns:1fr; }
+    .side-panel{ position:static; }
+    .journey-track{ flex-wrap:wrap; gap:18px 0; }
+    .journey-track::before{ display:none; }
+  }
+
+  /* =========================================================
+     VUE 3 — POSTULER (carte d'embarquement)
+  ========================================================= */
+  .apply-wrap{ max-width:920px; margin:0 auto; padding:52px 28px 100px; }
+  .apply-grid{ display:grid; grid-template-columns: 1fr 340px; gap:0; box-shadow:var(--shadow); border-radius:6px; overflow:hidden; }
+  .apply-form{ background:var(--paper-raised); padding:38px 36px; }
+  .apply-form h2{ font-size:24px; margin-bottom:6px; }
+  .apply-form .sub{ color:var(--slate); font-size:13.5px; margin-bottom:28px; }
+  .field{ margin-bottom:18px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--ink-soft); }
+  .field input, .field select{
+    width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:3px;
+    font-family:'IBM Plex Sans',sans-serif; font-size:14px; background:var(--paper); color:var(--ink);
+  }
+  .field input:focus, .field select:focus{ border-color:var(--ink); outline:none; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .submit-btn{ width:100%; justify-content:center; margin-top:8px; padding:14px; font-size:14.5px; }
+
+  .boarding-stub{
+    background: repeating-linear-gradient(135deg, #1c2c50, #1c2c50 12px, #17233f 12px, #17233f 24px);
+    color:#fff; padding:32px 26px; display:flex; flex-direction:column;
+    border-left:2px dashed rgba(255,255,255,.3);
+  }
+  .boarding-stub .mono{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; opacity:.65; }
+  .boarding-stub h3{ color:#fff; font-size:20px; margin:8px 0 20px; }
+  .stub-row{ display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,.15); padding:10px 0; font-size:13px; }
+  .stub-row span:first-child{ opacity:.6; }
+  .stub-row span:last-child{ font-weight:600; }
+  .barcode{ margin-top:24px; height:44px; background:
+    repeating-linear-gradient(90deg, #fff 0 2px, transparent 2px 5px, #fff 5px 7px, transparent 7px 11px);
+    opacity:.85; border-radius:2px; }
+  .barcode-ref{ text-align:center; font-family:'IBM Plex Mono',monospace; font-size:10.5px; margin-top:8px; opacity:.7; letter-spacing:.1em;}
+
+  .confirm-screen{ display:none; text-align:center; padding:60px 30px; }
+  .confirm-screen.show{ display:block; }
+  .confirm-stamp{
+    width:88px; height:88px; border-radius:50%; border:3px solid var(--ok);
+    color:var(--ok); display:flex; align-items:center; justify-content:center;
+    margin:0 auto 22px; font-size:38px; transform:rotate(-8deg);
+  }
+  .confirm-screen h2{ font-size:26px; margin-bottom:10px; }
+  .confirm-screen p{ color:var(--slate); max-width:44ch; margin:0 auto 28px; line-height:1.6; }
+  .confirm-ref{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:13px;
+    background:var(--paper); border:1px dashed var(--line); padding:10px 18px; border-radius:4px; margin-bottom:28px;
+  }
+
+  @media (max-width:760px){ .apply-grid{ grid-template-columns:1fr; } .boarding-stub{ border-left:none; border-top:2px dashed rgba(255,255,255,.3);} }
+
+  footer.site{
+    border-top:1px solid var(--line); padding:40px 28px; text-align:center;
+    color:var(--slate); font-size:12.5px; position:relative; z-index:1;
+  }
+  footer.site .foot-links{ display:flex; gap:18px; justify-content:center; margin-bottom:14px; flex-wrap:wrap; }
+  footer.site a{ text-decoration:none; color:var(--ink-soft); font-weight:500; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="header-inner">
+    <div class="logo" onclick="navigate('list')">
+      <div class="logo-mark">E</div>
+      <div class="logo-text">Etudex<small>ÉTUDIER À L'ÉTRANGER</small></div>
+    </div>
+    <nav class="main">
+      <a onclick="navigate('list')" id="nav-list" class="current">Offres</a>
+      <a href="https://www.etudex.site/#apropos">À propos</a>
+      <a href="https://wa.me/33123456789" target="_blank">Contact</a>
+    </nav>
+    <a class="btn btn-stamp" href="https://wa.me/33123456789" target="_blank">Parler à un conseiller</a>
+  </div>
+</header>
+
+<!-- ============ VUE 1 : LISTE DES OFFRES ============ -->
+<section id="view-list" class="view active">
+  <div class="hero">
+    <div class="eyebrow">Campagne 2026 ouverte</div>
+    <h1>Votre dossier d'études à l'étranger, prêt à l'embarquement.</h1>
+    <p class="lead">Trois destinations, un seul accompagnement : admission, visa et suivi jusqu'au départ. Choisissez votre session ci-dessous.</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6B7A" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" type="text" placeholder="Rechercher un pays, une session…" oninput="renderOffers()">
+    </div>
+    <div class="filter-chips" id="filterChips">
+      <div class="chip active" data-filter="all" onclick="setFilter('all', this)">Toutes les offres</div>
+      <div class="chip" data-filter="europe" onclick="setFilter('europe', this)">Union Européenne</div>
+      <div class="chip" data-filter="ouvert" onclick="setFilter('ouvert', this)">Inscriptions ouvertes</div>
+    </div>
+  </div>
+
+  <div class="offer-grid" id="offerGrid"></div>
+  <div class="empty-state" id="emptyState">
+    <div class="display" style="font-size:20px;">Aucune offre ne correspond à votre recherche</div>
+    <p style="margin-top:8px;">Essayez un autre pays ou effacez le filtre.</p>
+  </div>
+</section>
+
+<!-- ============ VUE 2 : DÉTAIL OFFRE ============ -->
+<section id="view-detail" class="view">
+  <div class="dossier-hero">
+    <img id="detailImg" src="" alt="">
+    <div class="scrim"></div>
+    <div class="dossier-hero-content">
+      <button class="back-link" onclick="navigate('list')">← Retour aux offres</button>
+      <h1 id="detailTitle"></h1>
+      <div class="status-badge status-open" id="detailBadge"></div>
+    </div>
+  </div>
+
+  <div class="dossier-shell">
+    <div class="dossier-card">
+      <div class="tabs" id="detailTabs"></div>
+      <div id="detailPanels"></div>
+      <div class="journey">
+        <h3>Votre parcours avec Etudex</h3>
+        <div class="journey-track">
+          <div class="journey-step done"><div class="dot">1</div><p>Étude du dossier</p></div>
+          <div class="journey-step done"><div class="dot">2</div><p>Admission</p></div>
+          <div class="journey-step"><div class="dot">3</div><p>Dossier visa</p></div>
+          <div class="journey-step"><div class="dot">4</div><p>Entretien</p></div>
+          <div class="journey-step"><div class="dot">5</div><p>Départ</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <div class="side-card">
+        <div class="mono">Session</div>
+        <div class="session-name" id="sideSession"></div>
+        <a class="btn btn-stamp" id="sideApplyBtn" href="#" onclick="event.preventDefault(); navigate('apply')">Postuler à cette offre</a>
+        <a class="btn btn-ghost" style="background:transparent;border-color:rgba(255,255,255,.4);color:#fff;" href="https://wa.me/33123456789" target="_blank">Poser une question</a>
+      </div>
+      <div class="side-note" id="shareNote">
+        📎 Gardez une trace de cette offre — <button class="link-quiet" onclick="shareOffer()">copier le lien</button> ou l'envoyer sur WhatsApp.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VUE 3 : POSTULER ============ -->
+<section id="view-apply" class="view">
+  <div class="apply-wrap">
+    <button class="back-link" style="color:var(--ink); margin-bottom:18px;" onclick="navigate('detail')">← Retour à l'offre</button>
+
+    <div id="applyFormScreen">
+      <div class="apply-grid">
+        <div class="apply-form">
+          <h2>Postuler maintenant</h2>
+          <div class="sub" id="applySub">Complétez vos informations, un conseiller Etudex vous recontacte sous 48h.</div>
+          <form onsubmit="submitApplication(event)">
+            <div class="field-row">
+              <div class="field"><label>Nom</label><input required type="text" placeholder="Bendaoud"></div>
+              <div class="field"><label>Prénom</label><input required type="text" placeholder="Amina"></div>
+            </div>
+            <div class="field"><label>Téléphone (WhatsApp)</label><input required type="tel" placeholder="+213 5XX XX XX XX"></div>
+            <div class="field"><label>Adresse e-mail</label><input required type="email" placeholder="amina@exemple.com"></div>
+            <div class="field">
+              <label>Niveau d'étude actuel</label>
+              <select required>
+                <option value="">Sélectionner…</option>
+                <option>Baccalauréat</option>
+                <option>Licence</option>
+                <option>Master</option>
+              </select>
+            </div>
+            <button class="btn btn-stamp submit-btn" type="submit">Envoyer ma candidature</button>
+          </form>
+        </div>
+        <div class="boarding-stub">
+          <div class="mono">Offre sélectionnée</div>
+          <h3 id="stubTitle"></h3>
+          <div class="stub-row"><span>Session</span><span id="stubSession"></span></div>
+          <div class="stub-row"><span>Admission</span><span id="stubPrice"></span></div>
+          <div class="stub-row"><span>Statut</span><span>En préparation</span></div>
+          <div class="barcode"></div>
+          <div class="barcode-ref" id="stubRef"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="confirm-screen" id="confirmScreen">
+      <div class="confirm-stamp">✓</div>
+      <h2>Candidature enregistrée</h2>
+      <p>Votre dossier a été transmis à notre équipe. Un conseiller vous contacte sur WhatsApp sous 48h pour la suite du parcours.</p>
+      <div class="confirm-ref" id="confirmRef"></div>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <a class="btn btn-wa" href="https://wa.me/33123456789" target="_blank">Continuer sur WhatsApp</a>
+        <button class="btn btn-ghost" onclick="navigate('list')">Voir d'autres offres</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="foot-links">
+    <a href="tel:+33123456789">+213 554 09 51 79</a>
+    <a href="mailto:etudex.contact@gmail.com">etudex.contact@gmail.com</a>
+    <a href="https://maps.app.goo.gl/KSAFqd2EHERVGNii7" target="_blank">Tizi Ouzou, Algérie</a>
+  </div>
+  © 2026 Etudex. Tous droits réservés.
+</footer>
+
+<script>
+const OFFERS = [
+  {
+    id: 4,
+    flag: "🇭🇺",
+    country: "Hongrie",
+    region: "europe",
+    title: "Étudier en Hongrie 2026",
+    session: "Session septembre 2026",
+    opens: "Ouverture des inscriptions le 1er février",
+    status: "open",
+    price: "300 €",
+    priceNote: "200 € admission + 100 € service agence",
+    img: "https://res.cloudinary.com/dhl2kzvtd/image/upload/v1/offres_pages/STUDY_IN_HUNGARY__2_gmjpnu",
+    desc: "La Hongrie est la destination idéale pour les étudiants internationaux, offrant des universités reconnues, des programmes variés et un environnement culturel riche.",
+    description: [
+      "Prêt à étudier en Hongrie et à vivre une expérience académique unique 🇭🇺 ? La Hongrie est la destination idéale pour les étudiants internationaux, offrant des universités reconnues, des programmes variés et un environnement culturel riche.",
+      "Etudex est votre partenaire de confiance pour l'obtention de visa d'études en Hongrie. Nous vous accompagnons à chaque étape de votre démarche, de la constitution du dossier à la remise finale, afin de vous garantir un processus simple, rapide et sécurisé."
+    ],
+    services: [
+      { h: "Procédure d'admission en Hongrie 🇭🇺", items: [
+        "Sélection de l'établissement adapté à votre projet académique",
+        "Préparation et vérification des documents requis pour l'admission",
+        "Assistance pour la candidature en ligne et le suivi des dossiers",
+        "Préparation à l'entretien en anglais demandé par l'université"
+      ]},
+      { h: "Procédure de visa pour la Hongrie 🇭🇺", items: [
+        "Vérification complète et préparation de votre dossier de visa",
+        "Préparation à l'entretien en anglais",
+        "Suivi de votre dossier jusqu'à l'obtention du visa",
+        "Assistance à l'arrivée en Hongrie (transport, installation, orientation)"
+      ]}
+    ],
+    tarifs: [
+      { label: "Frais d'admission université", amount: "200 €", note: "Payable après acceptation du dossier" },
+      { label: "Frais de service Etudex", amount: "100 €", note: "Accompagnement complet admission + visa" }
+    ],
+    dossier: ["Diplôme et relevé du Bac", "Cursus universitaire (Licence ou Master)", "Diplôme universitaire", "Passeport valide", "Photo virtuelle récente"]
+  },
+  {
+    id: 5,
+    flag: "🇫🇷",
+    country: "France",
+    region: "europe",
+    title: "Écoles privées en France 2026",
+    session: "Session septembre 2026",
+    opens: "Les inscriptions sont ouvertes",
+    status: "open",
+    price: "300 €",
+    priceNote: "Payable uniquement après admission",
+    img: "https://res.cloudinary.com/dhl2kzvtd/image/upload/v1/offres_pages/STUDY_IN_HUNGARY__3_bmcdel",
+    desc: "Un choix stratégique pour poursuivre ses études en France dans un cadre sérieux, avec des écoles privées reconnues et accréditées.",
+    description: [
+      "Les écoles privées françaises représentent un choix stratégique pour les étudiants souhaitant poursuivre leurs études en France dans un cadre sérieux et structuré, avec un enseignement orienté vers la pratique et un accompagnement pédagogique renforcé.",
+      "Notre agence collabore exclusivement avec des écoles françaises réputées et accréditées, garantissant une formation de haut niveau et de réelles perspectives d'évolution académique et professionnelle en France."
+    ],
+    services: [
+      { h: "Accompagnement complet", items: [
+        "Orientation et choix du programme et de l'école adaptés au profil",
+        "Préparation complète pour l'entretien avec l'école",
+        "Inscription et suivi du dossier sur Campus France",
+        "Préparation à l'entretien Campus France",
+        "Constitution et vérification du dossier de visa",
+        "Aide à la prise de rendez-vous visa",
+        "Suivi personnalisé jusqu'au départ de l'étudiant"
+      ]}
+    ],
+    tarifs: [
+      { label: "Frais de service Etudex", amount: "300 €", note: "Réglés uniquement après obtention de l'admission — aucun paiement avant acceptation" }
+    ],
+    dossier: ["Baccalauréat", "Relevés de notes (lycée ou université)", "Diplômes universitaires (si disponibles)", "Curriculum Vitae (CV)", "Photo d'identité", "TCF — indispensable pour Campus France, non obligatoire pour l'admission"]
+  },
+  {
+    id: 3,
+    flag: "🇷🇴",
+    country: "Roumanie",
+    region: "europe",
+    title: "Étudier en Roumanie 2026",
+    session: "Session octobre 2026",
+    opens: "Inscriptions du 1er février au 30 août",
+    status: "soon",
+    price: "49 000 DA",
+    priceNote: "+ 25 000 DA procédure visa",
+    img: "https://res.cloudinary.com/dhl2kzvtd/image/upload/v1/offres_pages/STUDY_IN_HUNGARY__1_bcdvnw",
+    desc: "Enseignement de qualité, diplômes reconnus et coût de vie accessible — programmes en français, anglais ou roumain.",
+    description: [
+      "Vous souhaitez étudier en Europe dans un pays qui combine enseignement de qualité, diplômes reconnus et coût de vie accessible ? La Roumanie est une destination académique stratégique pour les étudiants internationaux.",
+      "Les universités roumaines proposent des programmes enseignés en français, en anglais et en roumain. Pour les étudiants sans certificat de langue, une année préparatoire en roumain permet d'acquérir le niveau requis avant les études universitaires."
+    ],
+    services: [
+      { h: "Procédure d'admission universitaire", items: [
+        "Étude et évaluation du dossier académique",
+        "Orientation universitaire selon le profil de l'étudiant",
+        "Inscription auprès des universités partenaires",
+        "Préparation, vérification et dépôt du dossier d'admission",
+        "Suivi du dossier jusqu'à l'obtention de la lettre d'admission"
+      ]},
+      { h: "Procédure de visa d'études", items: [
+        "Constitution et vérification du dossier de visa",
+        "Assistance pour la prise de rendez-vous",
+        "Accompagnement et conseils pour l'entretien",
+        "Suivi du dossier jusqu'au dépôt"
+      ]}
+    ],
+    tarifs: [
+      { label: "Procédure d'admission", amount: "49 000 DA", note: "Frais d'admission universitaire + traitement du dossier" },
+      { label: "Procédure de visa d'études", amount: "25 000 DA", note: "Préparation, vérification et suivi jusqu'au dépôt" }
+    ],
+    dossier: ["Diplôme du baccalauréat", "Relevés de notes (bac + cursus universitaire)", "Diplômes universitaires (pour candidats en master)", "Passeport valide", "Acte de naissance + certificat de résidence", "Test de langue (TCF, IELTS) — facultatif", "Certificat médical de bonne santé et phtisiologie", "Photo d'identité (format numérique)"]
+  }
+];
+
+let state = { filter: "all", currentOfferId: null };
+
+function navigate(view, offerId){
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  if(offerId) state.currentOfferId = offerId;
+  if(view === "list"){
+    document.getElementById("view-list").classList.add("active");
+  } else if(view === "detail"){
+    renderDetail(state.currentOfferId);
+    document.getElementById("view-detail").classList.add("active");
+  } else if(view === "apply"){
+    renderApply(state.currentOfferId);
+    document.getElementById("view-apply").classList.add("active");
+    document.getElementById("applyFormScreen").style.display = "block";
+    document.getElementById("confirmScreen").classList.remove("show");
+  }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function setFilter(f, el){
+  state.filter = f;
+  document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+  el.classList.add("active");
+  renderOffers();
+}
+
+function renderOffers(){
+  const q = document.getElementById("searchInput").value.trim().toLowerCase();
+  const grid = document.getElementById("offerGrid");
+  grid.innerHTML = "";
+  let visible = 0;
+  OFFERS.forEach(o => {
+    const matchesSearch = !q || o.title.toLowerCase().includes(q) || o.country.toLowerCase().includes(q);
+    const matchesFilter = state.filter === "all" || (state.filter === "europe" && o.region === "europe") || (state.filter === "ouvert" && o.status === "open");
+    if(!matchesSearch || !matchesFilter) return;
+    visible++;
+    const badgeClass = o.status === "open" ? "status-open" : "status-soon";
+    const badgeText = o.status === "open" ? "Inscriptions ouvertes" : "Clôture bientôt";
+    grid.insertAdjacentHTML("beforeend", `
+      <article class="ticket">
+        <div class="ticket-main">
+          <div class="ticket-flag-row">
+            <div class="flag-badge">${o.flag}</div>
+            <div>
+              <h2 class="ticket-title">${o.title}</h2>
+            </div>
+          </div>
+          <div class="status-badge ${badgeClass}"><span class="status-dot"></span>${badgeText}</div>
+          <p class="ticket-desc">${o.desc}</p>
+          <div class="ticket-meta">
+            <div class="meta-item"><span class="mono">Ouverture</span><strong>${o.opens}</strong></div>
+            <div class="meta-item"><span class="mono">Destination</span><strong>${o.country}</strong></div>
+          </div>
+          <div class="ticket-actions">
+            <button class="link-quiet" onclick="navigate('detail', ${o.id})">Voir le dossier complet →</button>
+          </div>
+        </div>
+        <div class="ticket-stub">
+          <div>
+            <div class="stub-label">Session</div>
+            <div class="stub-session">${o.session}</div>
+            <div class="stub-price">
+              <div class="mono" style="opacity:.6; font-size:10px;">À partir de</div>
+              <div class="amount">${o.price}</div>
+            </div>
+          </div>
+          <div>
+            <button class="stub-cta" onclick="navigate('detail', ${o.id})">Postuler maintenant →</button>
+            <div class="stub-ref mono">REF-ET${String(o.id).padStart(3,'0')}-26</div>
+          </div>
+        </div>
+      </article>
+    `);
+  });
+  document.getElementById("emptyState").classList.toggle("show", visible === 0);
+}
+
+function renderDetail(id){
+  const o = OFFERS.find(x => x.id === id) || OFFERS[0];
+  document.getElementById("detailImg").src = o.img;
+  document.getElementById("detailImg").alt = o.title;
+  document.getElementById("detailTitle").textContent = o.title;
+  const badge = document.getElementById("detailBadge");
+  badge.className = "status-badge " + (o.status === "open" ? "status-open" : "status-soon");
+  badge.innerHTML = `<span class="status-dot"></span>${o.opens}`;
+  document.getElementById("sideSession").textContent = o.session;
+
+  const tabsDef = ["Description","Services","Tarification","Dossier à fournir"];
+  document.getElementById("detailTabs").innerHTML = tabsDef.map((t,i) =>
+    `<button class="tab ${i===0?'active':''}" onclick="switchTab(${i}, this)">${t}</button>`
+  ).join("");
+
+  const panels = document.getElementById("detailPanels");
+  panels.innerHTML = `
+    <div class="tab-panel active" data-panel="0">
+      <h3>${o.title}</h3>
+      ${o.description.map(p => `<p>${p}</p>`).join("")}
+    </div>
+    <div class="tab-panel" data-panel="1">
+      <h3>Nos services inclus</h3>
+      ${o.services.map(s => `<div class="service-block"><h4>${s.h}</h4><ul class="check-list">${s.items.map(i=>`<li>${i}</li>`).join("")}</ul></div>`).join("")}
+    </div>
+    <div class="tab-panel" data-panel="2">
+      <h3>Nos tarifs</h3>
+      ${o.tarifs.map(t => `<div class="price-card"><div class="price-label">${t.label}</div><div class="price-amount">${t.amount}</div><div class="price-note">${t.note}</div></div>`).join("")}
+    </div>
+    <div class="tab-panel" data-panel="3">
+      <h3>Dossier à fournir</h3>
+      <ul class="check-list">${o.dossier.map(d => `<li>${d}</li>`).join("")}</ul>
+    </div>
+  `;
+}
+
+function switchTab(i, el){
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  el.classList.add("active");
+  document.querySelector(`.tab-panel[data-panel="${i}"]`).classList.add("active");
+}
+
+function renderApply(id){
+  const o = OFFERS.find(x => x.id === id) || OFFERS[0];
+  document.getElementById("applySub").textContent = `Vous postulez pour : ${o.title}. Un conseiller Etudex vous recontacte sous 48h.`;
+  document.getElementById("stubTitle").textContent = o.title;
+  document.getElementById("stubSession").textContent = o.session;
+  document.getElementById("stubPrice").textContent = o.price;
+  document.getElementById("stubRef").textContent = `REF-ET${String(o.id).padStart(3,'0')}-26 · TIZI OUZOU → ${o.country.toUpperCase()}`;
+}
+
+function submitApplication(e){
+  e.preventDefault();
+  const o = OFFERS.find(x => x.id === state.currentOfferId) || OFFERS[0];
+  const ref = `ETX-${o.id}${Math.floor(1000 + Math.random()*9000)}`;
+  document.getElementById("confirmRef").textContent = `Numéro de dossier : ${ref}`;
+  document.getElementById("applyFormScreen").style.display = "none";
+  document.getElementById("confirmScreen").classList.add("show");
+}
+
+function shareOffer(){
+  const o = OFFERS.find(x => x.id === state.currentOfferId) || OFFERS[0];
+  const text = `${o.title} — ${o.session} — via Etudex`;
+  if(navigator.share){
+    navigator.share({ title: o.title, text }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(text);
+    const note = document.getElementById("shareNote");
+    const original = note.innerHTML;
+    note.innerHTML = "✅ Lien copié — collez-le dans WhatsApp pour le partager.";
+    setTimeout(()=> note.innerHTML = original, 2200);
+  }
+}
+
+renderOffers();
+</script>
+</body>
+</html>
